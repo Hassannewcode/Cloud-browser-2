@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cloud Browser</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* General body styling */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            overflow: hidden;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: 280px;
+            background: #ffffff;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar h4 {
+            margin: 0 0 20px 0;
+            color: #495057;
+            font-size: 1.2em;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* New Session Button styling */
+        .new-session-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        }
+
+        .new-session-btn:hover {
+            background: linear-gradient(45deg, #0056b3, #003f7f);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+        }
+
+        /* Session Item styling */
+        .session-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .session-item:hover {
+            background: #e9ecef;
+            transform: translateX(3px);
+        }
+
+        .session-item.active {
+            border-color: #007bff;
+            background: #e7f1ff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+        }
+
+        .session-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #343a40;
+        }
+
+        .session-time {
+            color: #6c757d;
+            font-size: 0.8em;
+            margin-bottom: 8px;
+        }
+
+        /* Delete Button styling */
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.75em;
+            align-self: flex-end;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.2);
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+            box-shadow: 0 3px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        /* Main Area styling */
+        .main-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Align to top for browser controls */
+            background-color: #ffffff;
+        }
+
+        /* Browser controls styling */
+        .browser-controls {
+            width: 100%;
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            box-sizing: border-box;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            justify-content: center; /* Center items when wrapped */
+        }
+
+        .browser-controls input[type="text"] {
+            flex-grow: 1;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.9em;
+            max-width: 600px; /* Limit width of input */
+        }
+
+        .browser-controls button {
+            padding: 8px 15px;
+            background-color: #28a745; /* Green for navigate */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+
+        .browser-controls button:hover {
+            background-color: #218838;
+        }
+
+        /* Loading indicator styling */
+        #loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            font-size: 1.2em;
+            color: #6c757d;
+            background-color: #ffffff;
+            transition: opacity 0.3s ease;
+            position: absolute; /* Position over the content */
+            top: 0;
+            left: 0;
+            z-index: 10; /* Ensure it's on top */
+        }
+
+        /* Placeholder content for the browser view */
+        #browser-view-placeholder {
+            width: 100%;
+            height: calc(100% - 50px); /* Adjust height to account for controls */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f2f5;
+            color: #6c757d;
+            font-size: 1.1em;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #browser-view-placeholder p {
+            margin-bottom: 10px;
+        }
+
+        #browser-view-placeholder .session-id-display {
+            font-weight: bold;
+            color: #007bff;
+            background-color: #e7f1ff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: 200px;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+            .main-area {
+                flex: 1;
+                height: calc(100vh - 200px);
+            }
+            .browser-controls {
+                flex-direction: column;
+                padding: 10px;
+            }
+            .browser-controls input[type="text"] {
+                width: 100%;
+                max-width: none;
+            }
+            .browser-controls button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h4>Cloud Browser Sessions</h4>
+        <button class="new-session-btn" onclick="createNewSession()">+ New Session</button>
+        <div id="sessions-list"></div>
+    </div>
+
+    <div class="main-area">
+        <div class="browser-controls">
+            <input type="text" id="url-input" placeholder="Enter URL (e.g., https://www.google.com)">
+            <button onclick="navigate()">Go</button>
+        </div>
+        <div id="loading">Creating new browser session...</div>
+        <div id="browser-view-placeholder">
+            <p>Welcome to your Cloud Browser!</p>
+            <p>Create a new session or select an existing one from the sidebar.</p>
+            <p>Enter a URL above and click "Go" to navigate the remote browser.</p>
+            <p>Current Session ID:</p>
+            <div class="session-id-display" id="current-session-id-display">N/A</div>
+        </div>
+    </div>
+
+    <script>
+        // Retrieve sessions from local storage, or initialize an empty array
+        let sessions = JSON.parse(localStorage.getItem('my-cloud-browser-sessions') || '[]');
+        let currentSession = null; // Stores the currently active session object
+
+        const API_BASE_URL = window.location.origin; // Will be your Vercel URL in deployment
+
+        /**
+         * Renders the list of sessions in the sidebar.
+         * Updates the active state of the current session.
+         */
+        function renderSessions() {
+            const list = document.getElementById('sessions-list');
+            list.innerHTML = sessions.map((session, index) => `
+                <div class="session-item ${currentSession && currentSession.id === session.id ? 'active' : ''}" onclick="loadSession(${index})">
+                    <div class="session-name">${session.name}</div>
+                    <div class="session-time">${new Date(session.created).toLocaleString()}</div>
+                    <button class="delete-btn" onclick="deleteSession(${index}, event)">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * Creates a new simulated browser session by calling the backend API.
+         * Displays a loading indicator and updates the UI upon success or error.
+         */
+        async function createNewSession() {
+            try {
+                const loadingElement = document.getElementById('loading');
+                const placeholderElement = document.getElementById('browser-view-placeholder');
+                const sessionIdDisplay = document.getElementById('current-session-id-display');
+
+                loadingElement.style.display = 'flex'; // Show loading
+                loadingElement.textContent = 'Creating new browser session...';
+                placeholderElement.style.display = 'none'; // Hide placeholder
+                sessionIdDisplay.textContent = 'Creating...';
+
+                // Make the POST request to our Vercel API route
+                const response = await fetch(`${API_BASE_URL}/api/create-session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.data && data.data.id) {
+                    const session = {
+                        name: `Session ${sessions.length + 1}`,
+                        id: data.data.id,
+                        created: new Date().toISOString()
+                    };
+
+                    sessions.push(session);
+                    localStorage.setItem('my-cloud-browser-sessions', JSON.stringify(sessions));
+
+                    loadSession(sessions.length - 1); // Load the newly created session
+                    renderSessions(); // Re-render the session list
+                } else {
+                    const errorMessage = data.error || 'Failed to create session.';
+                    throw new Error(`API Error: ${errorMessage}`);
+                }
+            } catch (error) {
+                console.error('Error creating session:', error);
+                document.getElementById('loading').textContent = `Error: ${error.message}. Please try again.`;
+                document.getElementById('loading').style.color = '#dc3545';
+                document.getElementById('browser-view-placeholder').style.display = 'flex';
+                document.getElementById('current-session-id-display').textContent = 'Error';
+            }
+        }
+
+        /**
+         * Loads a specific session into the placeholder view.
+         * @param {number} index The index of the session in the `sessions` array.
+         */
+        function loadSession(index) {
+            const loadingElement = document.getElementById('loading');
+            const placeholderElement = document.getElementById('browser-view-placeholder');
+            const sessionIdDisplay = document.getElementById('current-session-id-display');
+
+            currentSession = sessions[index]; // Set the current active session
+
+            loadingElement.style.display = 'none'; // Hide loading
+            placeholderElement.style.display = 'flex'; // Show placeholder
+            sessionIdDisplay.textContent = currentSession.id; // Display session ID
+
+            document.getElementById('url-input').value = ''; // Clear URL input
+
+            renderSessions(); // Re-render to update active state
+        }
+
+        /**
+         * Navigates the current browser session to the URL in the input field.
+         */
+        async function navigate() {
+            if (!currentSession) {
+                alert('Please create or select a session first.'); // Using alert for simplicity, would use modal in production
+                return;
+            }
+
+            const urlInput = document.getElementById('url-input');
+            let url = urlInput.value.trim();
+
+            if (!url) {
+                alert('Please enter a URL to navigate.'); // Using alert for simplicity
+                return;
+            }
+
+            // Prepend 'https://' if no protocol is specified
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+
+            try {
+                const loadingElement = document.getElementById('loading');
+                loadingElement.style.display = 'flex';
+                loadingElement.textContent = `Navigating to ${url}...`;
+                document.getElementById('browser-view-placeholder').style.display = 'none';
+
+
+                const response = await fetch(`${API_BASE_URL}/api/navigate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: currentSession.id, url: url })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    console.log(data.message);
+                    loadingElement.style.display = 'none';
+                    document.getElementById('browser-view-placeholder').style.display = 'flex';
+                    document.getElementById('current-session-id-display').textContent = currentSession.id + ` (Navigated to: ${url})`;
+                } else {
+                    const errorMessage = data.error || 'Failed to navigate.';
+                    throw new Error(`API Error: ${errorMessage}`);
+                }
+            } catch (error) {
+                console.error('Error navigating:', error);
+                document.getElementById('loading').textContent = `Error: ${error.message}.`;
+                document.getElementById('loading').style.color = '#dc3545';
+                document.getElementById('browser-view-placeholder').style.display = 'flex';
+            }
+        }
+
+        /**
+         * Deletes a session from the list and local storage, and closes the remote browser.
+         * @param {number} index The index of the session to delete.
+         * @param {Event} event The click event to stop propagation.
+         */
+        async function deleteSession(index, event) {
+            event.stopPropagation(); // Prevent loadSession from being called
+
+            const sessionToDelete = sessions[index];
+            const wasCurrentSession = currentSession && currentSession.id === sessionToDelete.id;
+
+            try {
+                // Call the API to close the remote browser session
+                const response = await fetch(`${API_BASE_URL}/api/close-session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: sessionToDelete.id })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Log error but still proceed to remove from local storage
+                    console.error(`Failed to close remote session ${sessionToDelete.id}:`, data.error);
+                }
+
+            } catch (error) {
+                console.error(`Error communicating with close-session API for ${sessionToDelete.id}:`, error);
+            } finally {
+                // Always remove from local storage regardless of API success/failure
+                sessions.splice(index, 1);
+                localStorage.setItem('my-cloud-browser-sessions', JSON.stringify(sessions));
+
+                if (wasCurrentSession) {
+                    currentSession = null;
+                    document.getElementById('browser-view-placeholder').style.display = 'flex';
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('loading').textContent = 'No session selected. Create a new one!';
+                    document.getElementById('loading').style.color = '#6c757d';
+                    document.getElementById('current-session-id-display').textContent = 'N/A';
+                    document.getElementById('url-input').value = '';
+                }
+
+                renderSessions();
+            }
+        }
+
+        // Initialize the application: render existing sessions and create a new one if none exist
+        window.onload = function() {
+            renderSessions();
+            if (sessions.length === 0) {
+                createNewSession();
+            } else {
+                // If sessions exist, load the first one by default
+                loadSession(0);
+            }
+        };
+    </script>
+</body>
+</html>
