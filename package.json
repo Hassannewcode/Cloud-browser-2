@@ -1,0 +1,21 @@
+{
+  "name": "my-cloud-browser",
+  "version": "1.0.0",
+  "description": "A cloud browser application using Vercel and Playwright-Chromium",
+  "main": "index.js",
+  "scripts": {
+    "start": "vercel dev",
+    "deploy": "vercel"
+  },
+  "keywords": [
+    "cloud-browser",
+    "playwright",
+    "vercel",
+    "nodejs"
+  ],
+  "author": "Hassan",
+  "license": "MIT",
+  "dependencies": {
+    "playwright-chromium": "^1.45.0"
+  }
+}
