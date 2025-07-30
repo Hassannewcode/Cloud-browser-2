@@ -25,7 +25,7 @@ async function launchBrowser() {
     // for serverless environments.
     const browser = await chromium.launch({
         executablePath: executablePath, // Use the executable path provided by @sparticuz/chromium
-        headless: chromiumLambda.headless, // Use headless state from @sparticuz/chromium
+        headless: true, // Changed from chromiumLambda.headless to explicitly true to ensure boolean type
         args: chromiumLambda.args // Use recommended args from @sparticuz/chromium for serverless
     });
     return browser;
