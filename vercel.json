@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/create-session",
+      "dest": "/api/create-session.js",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/navigate",
+      "dest": "/api/navigate.js",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/close-session",
+      "dest": "/api/close-session.js",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
