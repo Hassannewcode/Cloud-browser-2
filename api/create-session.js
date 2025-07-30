@@ -19,14 +19,18 @@ async function launchBrowser() {
     // On Vercel, @sparticuz/chromium provides the path to the bundled executable.
     // Locally, playwright-core might find it automatically, or you can specify it.
     const executablePath = await chromiumLambda.executablePath();
+    console.log('Chromium Executable Path:', executablePath); // Log the path
+
+    const launchArgs = chromiumLambda.args; // Get recommended args from @sparticuz/chromium
+    console.log('Chromium Launch Arguments:', launchArgs); // Log the arguments
 
     // Launch a new headless Chromium browser instance using Playwright.
     // We pass the executablePath from @sparticuz/chromium and specific args
     // for serverless environments.
     const browser = await chromium.launch({
         executablePath: executablePath, // Use the executable path provided by @sparticuz/chromium
-        headless: true, // Changed from chromiumLambda.headless to explicitly true to ensure boolean type
-        args: chromiumLambda.args // Use recommended args from @sparticuz/chromium for serverless
+        headless: true, // Explicitly true for headless mode
+        args: launchArgs // Use recommended args from @sparticuz/chromium for serverless
     });
     return browser;
 }
@@ -89,11 +93,19 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error('Error creating browser session:', error);
-        // Attempt to close the browser if it was launched but an error occurred.
-        if (browserInstance) {
-            await browserInstance.close().catch(e => console.error("Error closing browser during error handling:", e));
+        // Check for the specific libnss3.so error message in the error stack
+        if (error.message && error.message.includes('libnss3.so')) {
+            res.status(500).json({
+                error: 'Failed to launch browser: Missing system dependency (libnss3.so). This often requires specific Vercel build configurations or a remote browser service.',
+                details: error.message
+            });
+        } else {
+            // Attempt to close the browser if it was launched but an error occurred.
+            if (browserInstance) {
+                await browserInstance.close().catch(e => console.error("Error closing browser during error handling:", e));
+            }
+            res.status(500).json({ error: error.message || 'Internal server error during session creation.' });
         }
-        res.status(500).json({ error: error.message || 'Internal server error during session creation.' });
     }
     // Note: In a true serverless function, the browser instance should ideally be closed
     // after its use if it's not being managed by an external service.
