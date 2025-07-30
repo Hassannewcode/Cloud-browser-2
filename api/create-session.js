@@ -1,13 +1,12 @@
 // api/create-session.js
 // This file will handle the creation of a new browser session.
 
-// Import Playwright's Chromium browser.
-// For Vercel deployment, you will typically use 'playwright-chromium'
-// which is designed for serverless environments and includes a compatible Chromium binary.
-const { chromium } = require('playwright-chromium');
+// Import Playwright's core library
+const { chromium } = require('playwright-core');
+// Import @sparticuz/chromium for Vercel compatibility
+const chromiumLambda = require('@sparticuz/chromium');
 
-// A simple in-memory store for active browser sessions.
-// IMPORTANT: This Map will NOT persist across Vercel function invocations.
+// IMPORTANT: This in-memory map will NOT persist across Vercel function invocations.
 // Each API call is a new execution environment. For a persistent solution,
 // you would need to manage sessions externally (e.g., a database, or
 // by connecting to a long-running remote browser service that manages browser instances).
@@ -16,19 +15,18 @@ const activeBrowserSessions = new Map();
 // Helper function to launch a browser instance.
 // This is extracted to potentially be reusable or modified for remote browser services.
 async function launchBrowser() {
+    // Determine the executable path for Chromium.
+    // On Vercel, @sparticuz/chromium provides the path to the bundled executable.
+    // Locally, playwright-core might find it automatically, or you can specify it.
+    const executablePath = await chromiumLambda.executablePath();
+
     // Launch a new headless Chromium browser instance using Playwright.
-    // `headless: true` means the browser runs in the background without a visible UI.
-    // `args` are crucial for running Playwright reliably in serverless environments.
+    // We pass the executablePath from @sparticuz/chromium and specific args
+    // for serverless environments.
     const browser = await chromium.launch({
-        headless: true, // Set to false for local debugging to see the browser UI
-        args: [
-            '--no-sandbox', // Essential for running as root in some environments (e.g., Docker, serverless)
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage', // Overcomes limited /dev/shm usage in some Docker/serverless setups
-            '--disable-accelerated-2d-canvas', // Disables hardware acceleration for 2D canvas
-            '--disable-gpu', // Disables GPU hardware acceleration
-            '--window-size=1920,1080' // Set default browser window size
-        ]
+        executablePath: executablePath, // Use the executable path provided by @sparticuz/chromium
+        headless: chromiumLambda.headless, // Use headless state from @sparticuz/chromium
+        args: chromiumLambda.args // Use recommended args from @sparticuz/chromium for serverless
     });
     return browser;
 }
